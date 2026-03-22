@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+import subprocess
+import sys
+from pathlib import Path
+
+_DIR = Path(__file__).parent
+_PROGRAM_DIR = _DIR.parent
+_VENV_DIR = _PROGRAM_DIR / ".venv"
+_VENV_BIN = _VENV_DIR / "bin" / "python"
+
+if _VENV_BIN.exists():
+    python_exe = str(_VENV_BIN)
+else:
+    python_exe = "python3"
+
+try:
+    subprocess.check_call(
+        [python_exe, "-m", "wyoming_kittentts"] + sys.argv[1:]
+    )
+except KeyboardInterrupt:
+    pass

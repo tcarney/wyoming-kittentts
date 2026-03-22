@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wyoming-kittentts"
+version = "0.1.0"
+description = "Wyoming protocol server for KittenTTS"
+license = {text = "MIT"}
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "wyoming>=1.8.0",
+    "zeroconf>=0.88.0",
+    "numpy",
+    "soundfile",
+]
+
+[tool.setuptools.packages.find]
+include = ["wyoming_kittentts"]
+exclude = ["script"]
+
+[project.scripts]
+wyoming-kittentts = "wyoming_kittentts.__main__:main"
