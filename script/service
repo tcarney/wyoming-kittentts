@@ -1,0 +1,25 @@
+#!/bin/bash
+set -e
+
+CONFIG_FILE="$HOME/.config/kittentts/config"
+
+# Defaults
+MODEL="KittenML/kitten-tts-mini-0.8"
+VOICE="Jasper"
+URI="tcp://0.0.0.0:10200"
+DEBUG=""
+
+# Source config if it exists
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+VENV_DIR="$(cd "$SCRIPT_DIR/.." && pwd)/.venv"
+
+FLAGS="--uri $URI --model $MODEL --voice $VOICE"
+if [ "$DEBUG" = "true" ]; then
+    FLAGS="$FLAGS --debug"
+fi
+
+exec "$VENV_DIR/bin/wyoming-kittentts" $FLAGS
