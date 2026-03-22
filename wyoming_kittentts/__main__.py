@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import logging
+import signal
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 
@@ -16,11 +17,16 @@ VOICES = ["Bella", "Jasper", "Luna", "Bruno", "Rosie", "Hugo", "Kiki", "Leo"]
 
 _LOGGER = logging.getLogger(__name__)
 
+
 async def _async_main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--uri", default="tcp://0.0.0.0:10200")
     parser.add_argument("--model", default="KittenML/kitten-tts-mini-0.8")
     parser.add_argument("--voice", default="Jasper")
+    parser.add_argument(
+        "--threads", type=int, default=0,
+        help="ONNX intra-op threads (0 = auto-detect CPU count)",
+    )
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
 
@@ -64,8 +70,11 @@ async def _async_main():
     ort.set_default_logger_severity(3)  # suppress ORT warnings
     sess_options = ort.SessionOptions()
     sess_options.inter_op_num_threads = 1
-    sess_options.intra_op_num_threads = 2
     sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+
+    if args.threads > 0:
+        sess_options.intra_op_num_threads = args.threads
+    # else: ONNX Runtime auto-detects (uses all cores)
 
     _LOGGER.info("Loading KittenTTS model: %s", args.model)
     model = KittenTTS(args.model)
@@ -95,7 +104,16 @@ async def _async_main():
     handler_factory = partial(
         KittenTTSEventHandler, wyoming_info, model, args.voice, executor
     )
-    await server.run(handler_factory)
+
+    server_task = asyncio.create_task(server.run(handler_factory))
+    loop = asyncio.get_running_loop()
+    loop.add_signal_handler(signal.SIGINT, server_task.cancel)
+    loop.add_signal_handler(signal.SIGTERM, server_task.cancel)
+
+    try:
+        await server_task
+    except asyncio.CancelledError:
+        _LOGGER.info("Server stopped")
 
 
 def main():
