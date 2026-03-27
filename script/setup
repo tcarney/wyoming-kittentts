@@ -1,52 +1,11 @@
-#!/usr/bin/env python3
-import shutil
-import subprocess
-import sys
-import venv
-from pathlib import Path
+#!/usr/bin/env bash
+set -euo pipefail
 
-_DIR = Path(__file__).parent
-_PROGRAM_DIR = _DIR.parent
-_VENV_DIR = _PROGRAM_DIR / ".venv"
+cd "$(dirname "$0")/.."
 
-# Require Python 3.11 or 3.12 (misaki requires <3.13)
-_REQUIRED = (3, 11)
-_MAX = (3, 13)
+if ! command -v uv &>/dev/null; then
+    echo "Error: uv is not installed. Install it: https://docs.astral.sh/uv/getting-started/installation/"
+    exit 1
+fi
 
-if sys.version_info[:2] >= _REQUIRED and sys.version_info[:2] < _MAX:
-    python_exe = sys.executable
-else:
-    # Try to find a compatible python
-    for name in ("python3.11", "python3.12"):
-        found = shutil.which(name)
-        if found:
-            python_exe = found
-            break
-    else:
-        sys.exit(
-            f"Error: Python >=3.11,<3.13 required (found {sys.version_info[:2]}). "
-            "Install python3.11: brew install python@3.11"
-        )
-    # Re-exec under the correct interpreter
-    subprocess.check_call([python_exe, __file__] + sys.argv[1:])
-    raise SystemExit(0)
-
-# Create virtual environment
-builder = venv.EnvBuilder(with_pip=True)
-context = builder.ensure_directories(_VENV_DIR)
-builder.create(_VENV_DIR)
-
-# Upgrade dependencies
-pip = [context.env_exe, "-m", "pip"]
-subprocess.check_call(pip + ["install", "--upgrade", "pip"])
-subprocess.check_call(pip + ["install", "--upgrade", "setuptools", "wheel"])
-
-# Install kittentts from GitHub (not on PyPI)
-subprocess.check_call(
-    pip + ["install", "git+https://github.com/KittenML/KittenTTS.git@0.8.1"]
-)
-
-# Install wyoming-kittentts in editable mode
-subprocess.check_call(
-    pip + ["install", "-e", str(_PROGRAM_DIR)]
-)
+uv sync

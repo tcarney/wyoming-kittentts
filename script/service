@@ -2,6 +2,12 @@
 set -e
 
 CONFIG_FILE="$HOME/.config/kittentts/config"
+SHIM="$1"
+
+if [ -z "$SHIM" ] || [ ! -x "$SHIM" ]; then
+    echo "Error: wyoming-kittentts shim not found. Run script/install first."
+    exit 1
+fi
 
 # Defaults
 MODEL="KittenML/kitten-tts-mini-0.8"
@@ -14,12 +20,9 @@ if [ -f "$CONFIG_FILE" ]; then
     source "$CONFIG_FILE"
 fi
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-VENV_DIR="$(cd "$SCRIPT_DIR/.." && pwd)/.venv"
-
 FLAGS="--uri $URI --model $MODEL --voice $VOICE"
 if [ "$DEBUG" = "true" ]; then
     FLAGS="$FLAGS --debug"
 fi
 
-exec "$VENV_DIR/bin/wyoming-kittentts" $FLAGS
+exec "$SHIM" $FLAGS

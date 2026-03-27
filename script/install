@@ -3,7 +3,6 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROGRAM_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-VENV_DIR="$PROGRAM_DIR/.venv"
 PLIST_NAME="com.kittentts.wyoming.plist"
 PLIST_SRC="$SCRIPT_DIR/$PLIST_NAME"
 PLIST_DST="$HOME/Library/LaunchAgents/$PLIST_NAME"
@@ -13,16 +12,22 @@ CONFIG_FILE="$CONFIG_DIR/config"
 
 echo "Installing wyoming-kittentts service..."
 
-# Run setup if venv doesn't exist
-if [ ! -d "$VENV_DIR" ]; then
-    echo "==> Running setup..."
-    "$SCRIPT_DIR/setup"
-fi
-
-if [ ! -x "$VENV_DIR/bin/python" ]; then
-    echo "Error: venv not found at $VENV_DIR. Run script/setup first."
+if ! command -v uv &>/dev/null; then
+    echo "Error: uv is not installed. Install it: https://docs.astral.sh/uv/getting-started/installation/"
     exit 1
 fi
+
+# Install as a uv tool (provides wyoming-kittentts shim in ~/.local/bin)
+echo "==> Installing wyoming-kittentts tool..."
+uv tool install --from "$PROGRAM_DIR" wyoming-kittentts --force
+
+# Locate the installed shim
+SHIM="$(uv tool dir --bin)/wyoming-kittentts"
+if [ ! -x "$SHIM" ]; then
+    echo "Error: wyoming-kittentts shim not found at $SHIM"
+    exit 1
+fi
+echo "==> Installed shim: $SHIM"
 
 # Create config file with defaults (won't overwrite existing)
 mkdir -p "$CONFIG_DIR"
@@ -44,6 +49,7 @@ mkdir -p "$HOME/Library/LaunchAgents"
 
 # Generate plist from template
 sed -e "s|<SCRIPT-DIR>|$SCRIPT_DIR|g" \
+    -e "s|<SHIM>|$SHIM|g" \
     -e "s|<LOG-DIR>|$LOG_DIR|g" \
     "$PLIST_SRC" > "$PLIST_DST"
 

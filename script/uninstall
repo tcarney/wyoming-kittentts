@@ -13,3 +13,8 @@ if [ -f "$PLIST_DST" ]; then
 else
     echo "Service not installed."
 fi
+
+# Remove the uv tool
+if command -v uv &>/dev/null; then
+    uv tool uninstall wyoming-kittentts 2>/dev/null && echo "Tool uninstalled." || true
+fi

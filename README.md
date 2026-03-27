@@ -19,10 +19,10 @@ Point HA's Wyoming integration at `<host-ip>:10200`.
 
 ## macOS (Native)
 
-Running natively is recommended on macOS for best performance.
+Running natively is recommended on macOS for best performance. Requires [uv](https://docs.astral.sh/uv/).
 
 ```bash
-# Create venv and install dependencies
+# Install dependencies (uv sync)
 script/setup
 
 # Run the server

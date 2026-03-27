@@ -9,6 +9,7 @@ description = "Wyoming protocol server for KittenTTS"
 license = {text = "MIT"}
 requires-python = ">=3.11,<3.13"
 dependencies = [
+    "kittentts",
     "wyoming>=1.8.0",
     "zeroconf>=0.88.0",
     "numpy",
@@ -21,3 +22,6 @@ exclude = ["script"]
 
 [project.scripts]
 wyoming-kittentts = "wyoming_kittentts.__main__:main"
+
+[tool.uv.sources]
+kittentts = { git = "https://github.com/KittenML/KittenTTS.git", tag = "0.8.1" }

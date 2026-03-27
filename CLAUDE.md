@@ -10,13 +10,13 @@ Wyoming protocol TTS server for [KittenTTS](https://github.com/KittenML/KittenTT
 
 - **Python version:** >=3.11, <3.13 (required — `misaki` declares `Requires-Python <3.13`)
 - **No test suite** — testing is manual via Wyoming protocol connection to HA
-- **kittentts is not on PyPI** — installed from GitHub (`git+https://github.com/KittenML/KittenTTS.git@0.8.1`)
+- **kittentts is not on PyPI** — resolved via `[tool.uv.sources]` from GitHub (`git+https://github.com/KittenML/KittenTTS.git@0.8.1`)
 
 ### Build and Run
 
 ```bash
-# Native
-script/setup   # creates .venv, installs kittentts from GitHub + wyoming-kittentts editable
+# Native (requires uv: https://docs.astral.sh/uv/)
+script/setup   # runs uv sync
 script/run --uri tcp://0.0.0.0:10200 --model KittenML/kitten-tts-mini-0.8 --voice Jasper --debug
 
 # Docker
@@ -58,7 +58,7 @@ KittenTTS outputs float32 numpy arrays at 24000 Hz. The handler converts to int1
 
 Flat layout matching wyoming-piper: source at `wyoming_kittentts/`. Entry point: `wyoming_kittentts.__main__:main`.
 
-`kittentts` is intentionally not listed in `pyproject.toml` dependencies (not on PyPI) — it's installed separately from GitHub.
+`kittentts` is listed in `pyproject.toml` dependencies with its GitHub source defined in `[tool.uv.sources]` (not on PyPI).
 
 ### Key APIs
 
@@ -90,8 +90,9 @@ Bella, Jasper, Luna, Bruno, Rosie, Hugo, Kiki, Leo
 
 ### macOS launchd Service
 
+- **Install method:** `uv tool install` — installs `wyoming-kittentts` as a standalone shim (no `uv` needed at runtime)
 - **Plist template:** `script/com.kittentts.wyoming.plist` — placeholders substituted by `script/install`
-- **Wrapper script:** `script/service` — sources `~/.config/kittentts/config` then execs `wyoming-kittentts`
+- **Wrapper script:** `script/service` — sources `~/.config/kittentts/config` then execs the shim (passed as `$1`)
 - **Config file:** `~/.config/kittentts/config` — shell vars (MODEL, VOICE, URI, DEBUG)
 - **Logs:** `~/Library/Logs/kittentts/`
 
