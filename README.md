@@ -51,7 +51,7 @@ To change options, edit the config and restart:
 
 ```bash
 $EDITOR ~/.config/kittentts/config
-launchctl kickstart -k gui/$UID/com.kittentts.wyoming
+launchctl kickstart -k gui/$UID/com.local.wyoming-kittentts
 ```
 
 To uninstall:

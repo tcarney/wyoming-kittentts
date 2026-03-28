@@ -91,7 +91,7 @@ Bella, Jasper, Luna, Bruno, Rosie, Hugo, Kiki, Leo
 ### macOS launchd Service
 
 - **Install method:** `uv tool install` — installs `wyoming-kittentts` as a standalone shim (no `uv` needed at runtime)
-- **Plist template:** `script/com.kittentts.wyoming.plist` — placeholders substituted by `script/install`
+- **Plist template:** `script/com.local.wyoming-kittentts.plist` — placeholders substituted by `script/install`
 - **Wrapper script:** `script/service` — sources `~/.config/kittentts/config` then execs the shim (passed as `$1`)
 - **Config file:** `~/.config/kittentts/config` — shell vars (MODEL, VOICE, URI, DEBUG)
 - **Logs:** `~/Library/Logs/kittentts/`

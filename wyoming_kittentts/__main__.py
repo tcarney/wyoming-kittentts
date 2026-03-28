@@ -97,7 +97,7 @@ async def _async_main():
     uri_parts = args.uri.rsplit(":", 1)
     port = int(uri_parts[-1]) if len(uri_parts) > 1 else 10200
 
-    zeroconf = HomeAssistantZeroconf(port=port)
+    zeroconf = HomeAssistantZeroconf(port=port, name="kittentts")
     await zeroconf.register_server()
     _LOGGER.info("Zeroconf discovery registered on port %d", port)
 

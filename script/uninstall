@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PLIST_NAME="com.kittentts.wyoming.plist"
+PLIST_NAME="com.local.wyoming-kittentts.plist"
 PLIST_DST="$HOME/Library/LaunchAgents/$PLIST_NAME"
 
 echo "Uninstalling wyoming-kittentts service..."

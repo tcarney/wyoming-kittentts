@@ -4,7 +4,7 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.kittentts.wyoming</string>
+    <string>com.local.wyoming-kittentts</string>
     <key>ProgramArguments</key>
     <array>
         <string><SCRIPT-DIR>/service</string>
