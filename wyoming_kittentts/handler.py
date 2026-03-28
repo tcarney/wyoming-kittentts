@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import redirect_stdout
 
@@ -21,10 +22,12 @@ CHANNELS = 1
 SAMPLES_PER_CHUNK = 1024  # ~43ms at 24kHz, matches piper's default
 
 _DEVNULL = open(os.devnull, "w")
+_LONE_PERIOD = re.compile(r"(?<!\.)\.(?!\.)(?!\s*$)")
 
 
 def _synthesize_audio(model, text: str, voice: str) -> bytes:
     """Run inference and convert to int16 PCM bytes (called in executor)."""
+    text = _LONE_PERIOD.sub(",", text)
     with redirect_stdout(_DEVNULL):
         audio_float = model.generate(text, voice=voice)
     audio_int16 = (np.clip(audio_float, -1.0, 1.0) * 32767).astype(np.int16)
