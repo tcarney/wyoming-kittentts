@@ -48,6 +48,7 @@ async def _async_main():
                 installed=True,
                 description="KittenTTS local TTS",
                 version="0.8.1",
+                supports_synthesize_streaming=True,
                 voices=[
                     TtsVoice(
                         name=v,
