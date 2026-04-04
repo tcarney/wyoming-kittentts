@@ -1,9 +1,12 @@
 import argparse
 import asyncio
+import json
 import logging
+import os
 import signal
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+from pathlib import Path
 
 import onnxruntime as ort
 from kittentts import KittenTTS
@@ -15,22 +18,48 @@ from .handler import KittenTTSEventHandler, _synthesize_audio
 
 VOICES = ["Bella", "Jasper", "Luna", "Bruno", "Rosie", "Hugo", "Kiki", "Leo"]
 
+_DEFAULT_CONFIG = os.path.join(os.environ.get("HOME", "~"), ".config/kittentts/config.json")
+
 _LOGGER = logging.getLogger(__name__)
 
 
+def _load_config(config_path: str) -> dict:
+    """Load JSON config file, returning a dict of settings."""
+    path = Path(config_path).expanduser()
+    if not path.is_file():
+        return {}
+    return json.loads(path.read_text())
+
+
 async def _async_main():
+    # First pass: extract --config so we can use it as defaults for everything else
+    pre_parser = argparse.ArgumentParser(add_help=False)
+    pre_parser.add_argument("--config", default=_DEFAULT_CONFIG)
+    pre_args, _ = pre_parser.parse_known_args()
+
+    file_cfg = _load_config(pre_args.config)
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("--uri", default="tcp://0.0.0.0:10200")
-    parser.add_argument("--model", default="KittenML/kitten-tts-mini-0.8")
-    parser.add_argument("--voice", default="Jasper")
+    parser.add_argument("--config", default=_DEFAULT_CONFIG,
+                        help="Path to config file (default: ~/.config/kittentts/config)")
+    parser.add_argument("--uri", default=file_cfg.get("uri", "tcp://0.0.0.0:10200"))
+    parser.add_argument("--model", default=file_cfg.get("model", "KittenML/kitten-tts-mini-0.8"))
+    parser.add_argument("--voice", default=file_cfg.get("voice", "Jasper"))
     parser.add_argument(
-        "--threads", type=int, default=0,
+        "--threads", type=int,
+        default=file_cfg.get("threads", 0),
         help="ONNX intra-op threads (0 = auto-detect CPU count)",
     )
-    parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--debug", action="store_true",
+                        default=file_cfg.get("debug", False))
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
+
+    if file_cfg:
+        _LOGGER.info("Loaded config from %s", pre_args.config)
+    else:
+        _LOGGER.debug("No config file found at %s", pre_args.config)
 
     # Suppress verbose HTTP wire logging
     http_level = logging.INFO if args.debug else logging.WARNING

@@ -16,8 +16,8 @@ Wyoming protocol TTS server for [KittenTTS](https://github.com/KittenML/KittenTT
 
 ```bash
 # Native (requires uv: https://docs.astral.sh/uv/)
-script/setup   # runs uv sync
-script/run --uri tcp://0.0.0.0:10200 --model KittenML/kitten-tts-mini-0.8 --voice Jasper --debug
+uv sync
+uv run python -m wyoming_kittentts --uri tcp://0.0.0.0:10200 --model KittenML/kitten-tts-mini-0.8 --voice Jasper --debug
 
 # Docker
 docker build -t wyoming-kittentts .
@@ -25,7 +25,7 @@ docker run -it -p 10200:10200 -v kittentts-data:/data -e HF_HOME=/data wyoming-k
     --model KittenML/kitten-tts-mini-0.8 --voice Jasper
 
 # macOS launchd service
-script/install      # setup + create service with config at ~/.config/kittentts/config
+script/install      # setup + create service with config at ~/.config/kittentts/config.json
 script/uninstall    # stop + remove service
 ```
 
@@ -88,12 +88,15 @@ Bella, Jasper, Luna, Bruno, Rosie, Hugo, Kiki, Leo
 | kitten-tts-nano | 15M | ~56MB | `KittenML/kitten-tts-nano-0.8-fp32` |
 | kitten-tts-nano-int8 | 15M | ~25MB | `KittenML/kitten-tts-nano-0.8-int8` |
 
+### Configuration
+
+The app loads a JSON config file at startup (default: `~/.config/kittentts/config.json`). Config values are used as defaults; CLI args override them. Supported keys: `model`, `voice`, `uri`, `threads`, `debug`. Pass `--config <path>` to use a different file.
+
 ### macOS launchd Service
 
-- **Install method:** `uv tool install` — installs `wyoming-kittentts` as a standalone shim (no `uv` needed at runtime)
-- **Plist template:** `script/com.local.wyoming-kittentts.plist` — placeholders substituted by `script/install`
-- **Wrapper script:** `script/service` — sources `~/.config/kittentts/config` then execs the shim (passed as `$1`)
-- **Config file:** `~/.config/kittentts/config` — shell vars (MODEL, VOICE, URI, DEBUG)
+- **Install method:** `uv tool install` — installs `wyoming-kittentts` as a standalone tool (no `uv` needed at runtime)
+- **Plist generation:** embedded in `script/install` via heredoc (no separate template file)
+- **Config file:** `~/.config/kittentts/config.json` — JSON (`model`, `voice`, `uri`, `threads`, `debug`)
 - **Logs:** `~/Library/Logs/kittentts/`
 
 ## Reference Implementations

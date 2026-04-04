@@ -22,14 +22,15 @@ Point HA's Wyoming integration at `<host-ip>:10200`.
 Running natively is recommended on macOS for best performance. Requires [uv](https://docs.astral.sh/uv/).
 
 ```bash
-# Install dependencies (uv sync)
-script/setup
+# Install dependencies
+uv sync
 
 # Run the server
-script/run  --uri tcp://0.0.0.0:10200 \
-            --model KittenML/kitten-tts-mini-0.8 \
-            --voice Jasper \
-            --debug
+uv run python -m wyoming_kittentts \
+    --uri tcp://0.0.0.0:10200 \
+    --model KittenML/kitten-tts-mini-0.8 \
+    --voice Jasper \
+    --debug
 ```
 
 ### Install as a Service (launchd)
@@ -38,19 +39,21 @@ script/run  --uri tcp://0.0.0.0:10200 \
 script/install
 ```
 
-Config is stored at `~/.config/kittentts/config`:
+Config is stored at `~/.config/kittentts/config.json`:
 
-```bash
-MODEL="KittenML/kitten-tts-mini-0.8"
-VOICE="Jasper"
-URI="tcp://0.0.0.0:10200"
-# DEBUG=true
+```json
+{
+  "model": "KittenML/kitten-tts-mini-0.8",
+  "voice": "Jasper",
+  "uri": "tcp://0.0.0.0:10200",
+  "debug": false
+}
 ```
 
 To change options, edit the config and restart:
 
 ```bash
-$EDITOR ~/.config/kittentts/config
+$EDITOR ~/.config/kittentts/config.json
 launchctl kickstart -k gui/$UID/com.local.wyoming-kittentts
 ```
 

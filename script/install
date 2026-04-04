@@ -4,11 +4,10 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROGRAM_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PLIST_NAME="com.local.wyoming-kittentts.plist"
-PLIST_SRC="$SCRIPT_DIR/$PLIST_NAME"
 PLIST_DST="$HOME/Library/LaunchAgents/$PLIST_NAME"
 LOG_DIR="$HOME/Library/Logs/kittentts"
 CONFIG_DIR="$HOME/.config/kittentts"
-CONFIG_FILE="$CONFIG_DIR/config"
+CONFIG_FILE="$CONFIG_DIR/config.json"
 
 echo "Installing wyoming-kittentts service..."
 
@@ -17,26 +16,32 @@ if ! command -v uv &>/dev/null; then
     exit 1
 fi
 
-# Install as a uv tool (provides wyoming-kittentts shim in ~/.local/bin)
+# Sync dependencies
+echo "==> Syncing dependencies..."
+(cd "$PROGRAM_DIR" && uv sync)
+
+# Install as a uv tool (provides wyoming-kittentts in ~/.local/bin)
 echo "==> Installing wyoming-kittentts tool..."
 uv tool install --from "$PROGRAM_DIR" wyoming-kittentts --force
 
-# Locate the installed shim
-SHIM="$(uv tool dir --bin)/wyoming-kittentts"
-if [ ! -x "$SHIM" ]; then
-    echo "Error: wyoming-kittentts shim not found at $SHIM"
+# Locate the installed tool
+TOOL="$(uv tool dir --bin)/wyoming-kittentts"
+if [ ! -x "$TOOL" ]; then
+    echo "Error: wyoming-kittentts not found at $TOOL"
     exit 1
 fi
-echo "==> Installed shim: $SHIM"
+echo "==> Installed tool: $TOOL"
 
 # Create config file with defaults (won't overwrite existing)
 mkdir -p "$CONFIG_DIR"
 if [ ! -f "$CONFIG_FILE" ]; then
     cat > "$CONFIG_FILE" <<'EOF'
-MODEL="KittenML/kitten-tts-mini-0.8"
-VOICE="Jasper"
-URI="tcp://0.0.0.0:10200"
-# DEBUG=true
+{
+  "model": "KittenML/kitten-tts-mini-0.8",
+  "voice": "Jasper",
+  "uri": "tcp://0.0.0.0:10200",
+  "debug": false
+}
 EOF
     echo "==> Created config: $CONFIG_FILE"
 else
@@ -47,11 +52,30 @@ fi
 mkdir -p "$LOG_DIR"
 mkdir -p "$HOME/Library/LaunchAgents"
 
-# Generate plist from template
-sed -e "s|<SCRIPT-DIR>|$SCRIPT_DIR|g" \
-    -e "s|<SHIM>|$SHIM|g" \
-    -e "s|<LOG-DIR>|$LOG_DIR|g" \
-    "$PLIST_SRC" > "$PLIST_DST"
+# Generate plist
+cat > "$PLIST_DST" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.local.wyoming-kittentts</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>$TOOL</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>$LOG_DIR/stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>$LOG_DIR/stderr.log</string>
+</dict>
+</plist>
+EOF
 
 # Unload if already loaded
 launchctl bootout gui/$UID "$PLIST_DST" 2>/dev/null || true
